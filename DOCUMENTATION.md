@@ -175,18 +175,39 @@ The worker process (`queue-worker.js`) continuously polls the SQLite database fo
 
 ### Puppeteer Configuration
 
+The scraper uses advanced stealth techniques to avoid detection and appear human-like:
+
 ```javascript
 const browser = await puppeteer.launch({
   headless: "new",
-  args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-blink-features=AutomationControlled",
+    "--disable-features=VizDisplayCompositor",
+    // ... additional stealth arguments
+  ],
 });
 ```
 
-**Settings:**
+**Stealth Features:**
 - **Headless Mode**: `"new"` - Latest headless implementation
-- **Sandbox**: Disabled for containerized environments
+- **Automation Detection**: Disabled via `--disable-blink-features=AutomationControlled`
+- **Realistic User Agents**: Rotated from pool of common Chrome user agents
+- **Random Viewports**: Simulates different screen resolutions (1920x1080, 1366x768, etc.)
+- **Browser Headers**: Complete set of realistic HTTP headers
+- **WebDriver Removal**: JavaScript injection to remove `navigator.webdriver` property
+- **Plugin Simulation**: Mocked browser plugins and language settings
+- **Human Timing**: Random delays between actions (1-3 seconds before navigation, 0.5-2 seconds after load)
+- **Mouse Movement**: Simulated cursor movement to random coordinates
+- **Scroll Behavior**: Random scrolling to mimic reading patterns
+- **Fingerprint Evasion**: Removes automation indicators and CDC properties
+
+**Settings:**
 - **Timeout**: 60 seconds for page navigation
 - **Wait Strategy**: `networkidle2` - Wait until ≤2 network connections remain
+- **Viewport Rotation**: 5 common screen resolutions randomly selected
+- **User Agent Rotation**: 5 recent Chrome user agents for Windows, macOS, and Linux
 
 ### Automatic Cleanup
 
@@ -464,6 +485,39 @@ The current implementation processes jobs sequentially. For higher throughput, c
 - Validate URLs before processing
 - Implement domain whitelisting/blacklisting
 - Sanitize user inputs to prevent injection attacks
+
+## Anti-Detection Features
+
+The scraper includes comprehensive stealth capabilities to avoid bot detection:
+
+### Browser Fingerprinting Evasion
+- **WebDriver Property Removal**: Eliminates `navigator.webdriver` detection
+- **Automation Indicators**: Removes Chrome DevTools Protocol (CDP) properties
+- **Plugin Simulation**: Mocks realistic browser plugin array
+- **Language Settings**: Sets realistic language preferences
+
+### Traffic Pattern Mimicking
+- **Random Delays**: Variable timing between requests (1-3 seconds)
+- **Human-like Navigation**: Mouse movements and scroll patterns
+- **Realistic Headers**: Complete HTTP header sets matching real browsers
+- **User Agent Rotation**: Cycles through current Chrome versions
+
+### Browser Configuration
+- **Viewport Diversity**: Random screen resolutions from common devices
+- **Feature Flags**: Disables automation-specific Chrome features
+- **Resource Loading**: Mimics normal browser resource handling
+
+### Best Practices for Stealth Scraping
+1. **Respect Rate Limits**: Don't overwhelm target servers
+2. **Rotate Proxies**: Consider proxy rotation for high-volume scraping
+3. **Monitor Success Rates**: Track blocked requests and adjust timing
+4. **Update User Agents**: Keep user agent strings current
+5. **Test Regularly**: Verify stealth features against detection tools
+
+### Limitations
+- Some advanced bot detection systems may still identify automated traffic
+- JavaScript-heavy detection methods may require additional countermeasures
+- Consider using residential proxies for maximum stealth
 
 ## Migration from Synchronous Version
 
